@@ -60,7 +60,7 @@ func (d *Dispatcher) Enqueue(joblist ...Job) {
 	}
 }
 
-// Wait blocks until workers are done with their magic
+// Wait blocks until workers are done with their magic. And then stop talking to them
 func (d *Dispatcher) Wait() {
 	d.WaitGroup.Wait()
 }

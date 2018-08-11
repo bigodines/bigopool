@@ -17,7 +17,7 @@ func TestBootstrap(t *testing.T) {
 	d := NewDispatcher(2, 2)
 	d.Run()
 	for i := 0; i < 10; i++ {
-		d.Execute(EchoJob{})
+		d.Enqueue(EchoJob{})
 	}
 	d.Wait()
 }
@@ -30,7 +30,7 @@ func (e ErrorJob) Execute() (Result, error) {
 func TestErrors(t *testing.T) {
 	d := NewDispatcher(2, 2)
 	d.Run()
-	d.Execute(ErrorJob{})
+	d.Enqueue(ErrorJob{})
 	d.Wait()
 
 	assert.Equal(t, 1, len(d.Errors))
@@ -39,13 +39,13 @@ func TestErrors(t *testing.T) {
 func TestMixedErrors(t *testing.T) {
 	d := NewDispatcher(2, 2)
 	d.Run()
-	d.Execute(ErrorJob{})
+	d.Enqueue(ErrorJob{})
 
 	for i := 0; i < 10; i++ {
-		d.Execute(EchoJob{})
+		d.Enqueue(EchoJob{})
 	}
 
-	d.Execute(ErrorJob{})
+	d.Enqueue(ErrorJob{})
 	d.Wait()
 
 	assert.Equal(t, 2, len(d.Errors))
