@@ -17,11 +17,10 @@ type (
 		// A channel for receiving a worker termination signal
 		// (quits after processing)
 		quit chan bool
-		// A WaitGroup to signal the completed processing of a Job
-		wg *sync.WaitGroup
 
 		// where to report errors
-		errCh *chan error
+		errCh  *chan error
+		doneCh *chan bool
 	}
 
 	Dispatcher struct {
@@ -32,6 +31,7 @@ type (
 		WorkerPool chan chan Job
 		// Collect errors
 		ErrorCh chan error
+		DoneCh  chan bool
 
 		Errors []error
 	}
@@ -47,6 +47,7 @@ func NewDispatcher(maxWorkers int, queueSize int) *Dispatcher {
 		WorkerPool: pool,
 		WaitGroup:  &sync.WaitGroup{},
 		ErrorCh:    errors,
+		DoneCh:     make(chan bool),
 	}
 }
 
@@ -64,19 +65,24 @@ func (d *Dispatcher) Wait() {
 func (d *Dispatcher) Run() {
 	// starting n number of workers
 	for i := 0; i < d.MaxWorkers; i++ {
-		worker := NewWorker(d.WorkerPool, d.WaitGroup, &d.ErrorCh)
+		worker := NewWorker(d.WorkerPool, &d.ErrorCh, &d.DoneCh)
 		worker.Start()
 	}
 
 	// start the dispatcher routine
 	go d.dispatch()
-	for {
-		select {
-		case err := <-d.ErrorCh:
-			println("Got error")
-			d.Errors = append(d.Errors, err)
+	go func() {
+		for {
+			select {
+			case err := <-d.ErrorCh:
+				println("Got error")
+				d.Errors = append(d.Errors, err)
+			case <-d.DoneCh:
+				println("done")
+				d.WaitGroup.Done()
+			}
 		}
-	}
+	}()
 }
 
 func (d *Dispatcher) dispatch() {
@@ -97,13 +103,13 @@ func (d *Dispatcher) dispatch() {
 
 // NewWorker creates a new worker that can be registered to a WorkerPool
 // and receive jobs
-func NewWorker(workerPool chan chan Job, wg *sync.WaitGroup, errCh *chan error) Worker {
+func NewWorker(workerPool chan chan Job, errCh *chan error, doneCh *chan bool) Worker {
 	return Worker{
 		WorkerPool: workerPool,
 		JobChannel: make(chan Job),
 		quit:       make(chan bool),
-		wg:         wg,
 		errCh:      errCh,
+		doneCh:     doneCh,
 	}
 }
 
@@ -122,9 +128,7 @@ func (w Worker) Start() {
 					println("propagating error")
 					*w.errCh <- err
 				}
-				// signal to the wait group that a queued job has been processed
-				// so the main thread can continue
-				w.wg.Done()
+				*w.doneCh <- true
 			case <-w.quit:
 				// we have received a signal to stop
 				return
