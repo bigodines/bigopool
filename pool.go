@@ -19,8 +19,8 @@ type (
 		quit chan bool
 
 		// where to report errors
-		errCh  *chan error
-		doneCh *chan bool
+		errCh    *chan error
+		resultCh *chan Result
 	}
 
 	Dispatcher struct {
@@ -30,8 +30,8 @@ type (
 		// A pool of workers channels that are registered with the dispatcher
 		WorkerPool chan chan Job
 		// Collect errors
-		ErrorCh chan error
-		DoneCh  chan bool
+		ErrorCh  chan error
+		ResultCh chan Result
 
 		Errors []error
 	}
@@ -41,14 +41,14 @@ func NewDispatcher(maxWorkers int, queueSize int) *Dispatcher {
 	pool := make(chan chan Job, maxWorkers)
 	jobq := make(chan Job, queueSize)
 	errors := make(chan error)
-	done := make(chan bool)
+	done := make(chan Result)
 	return &Dispatcher{
 		JobQueue:   jobq,
 		MaxWorkers: maxWorkers,
 		WorkerPool: pool,
 		WaitGroup:  &sync.WaitGroup{},
 		ErrorCh:    errors,
-		DoneCh:     done,
+		ResultCh:   done,
 	}
 }
 
@@ -60,7 +60,7 @@ func (d *Dispatcher) Enqueue(joblist ...Job) {
 	}
 }
 
-// Wait blocks until workers are done with their magic. And then stop talking to them
+// Wait blocks until workers are done with their magic
 func (d *Dispatcher) Wait() {
 	d.WaitGroup.Wait()
 }
@@ -69,7 +69,7 @@ func (d *Dispatcher) Wait() {
 func (d *Dispatcher) Run() {
 	// Worker initialization
 	for i := 0; i < d.MaxWorkers; i++ {
-		worker := NewWorker(d.WorkerPool, &d.ErrorCh, &d.DoneCh)
+		worker := NewWorker(d.WorkerPool, &d.ErrorCh, &d.ResultCh)
 		worker.Start()
 	}
 
@@ -82,7 +82,7 @@ func (d *Dispatcher) Run() {
 			select {
 			case err := <-d.ErrorCh:
 				d.Errors = append(d.Errors, err)
-			case <-d.DoneCh:
+			case <-d.ResultCh:
 				d.WaitGroup.Done()
 			}
 		}
@@ -107,13 +107,13 @@ func (d *Dispatcher) dispatch() {
 
 // NewWorker creates a new worker that can be registered to a WorkerPool
 // and receive jobs
-func NewWorker(workerPool chan chan Job, errCh *chan error, doneCh *chan bool) Worker {
+func NewWorker(workerPool chan chan Job, errCh *chan error, resultCh *chan Result) Worker {
 	return Worker{
 		WorkerPool: workerPool,
 		JobChannel: make(chan Job),
 		quit:       make(chan bool),
 		errCh:      errCh,
-		doneCh:     doneCh,
+		resultCh:   resultCh,
 	}
 }
 
@@ -127,11 +127,11 @@ func (w Worker) Start() {
 
 			select {
 			case job := <-w.JobChannel:
-				_, err := job.Execute()
+				result, err := job.Execute()
 				if err != nil {
 					*w.errCh <- err
 				}
-				*w.doneCh <- true
+				*w.resultCh <- result
 			case <-w.quit:
 				// we have received a signal to stop
 				return
