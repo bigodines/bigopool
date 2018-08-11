@@ -75,10 +75,8 @@ func (d *Dispatcher) Run() {
 		for {
 			select {
 			case err := <-d.ErrorCh:
-				println("Got error")
 				d.Errors = append(d.Errors, err)
 			case <-d.DoneCh:
-				println("done")
 				d.WaitGroup.Done()
 			}
 		}
@@ -125,7 +123,6 @@ func (w Worker) Start() {
 			case job := <-w.JobChannel:
 				_, err := job.Execute()
 				if err != nil {
-					println("propagating error")
 					*w.errCh <- err
 				}
 				*w.doneCh <- true
