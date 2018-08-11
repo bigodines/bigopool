@@ -14,7 +14,10 @@ func (e EchoJob) Execute() (Result, error) {
 }
 
 func TestBootstrap(t *testing.T) {
-	d := NewDispatcher(2, 2)
+	d, e := NewDispatcher(2, 2)
+	if e != nil {
+		t.Fail()
+	}
 	d.Run()
 	for i := 0; i < 10; i++ {
 		d.Enqueue(EchoJob{})
@@ -28,7 +31,10 @@ func (e ErrorJob) Execute() (Result, error) {
 	return Result{}, fmt.Errorf("Errored")
 }
 func TestErrors(t *testing.T) {
-	d := NewDispatcher(2, 2)
+	d, e := NewDispatcher(2, 2)
+	if e != nil {
+		t.Fail()
+	}
 	d.Run()
 	d.Enqueue(ErrorJob{})
 	d.Wait()
@@ -37,7 +43,10 @@ func TestErrors(t *testing.T) {
 }
 
 func TestMixedErrors(t *testing.T) {
-	d := NewDispatcher(2, 2)
+	d, e := NewDispatcher(2, 5)
+	if e != nil {
+		t.Fail()
+	}
 	d.Run()
 	d.Enqueue(ErrorJob{})
 

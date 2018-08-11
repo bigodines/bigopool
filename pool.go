@@ -1,24 +1,35 @@
 package gopool
 
-import "sync"
+import (
+	"errors"
+	"sync"
+)
+
+var (
+	ErrNoWorkers = errors.New("Need at least one worker")
+	ErrZeroQueue = errors.New("Queue capacity can't be zero")
+)
 
 type (
+	// gopool can process anything that implements this interface
 	Job interface {
 		Execute() (Result, error)
 	}
 
-	Result struct{}
+	Result struct {
+		Response interface{}
+	}
 
 	Worker struct {
 		// A pool of workers channels that are registered with the dispatcher
 		WorkerPool chan chan Job
 		// A channel for receiving a job that was dispatched
-		JobChannel chan Job
+		jobCh chan Job
 		// A channel for receiving a worker termination signal
 		// (quits after processing)
 		quit chan bool
 
-		// where to report errors
+		// reporting channels
 		errCh    *chan error
 		resultCh *chan Result
 	}
@@ -37,7 +48,14 @@ type (
 	}
 )
 
-func NewDispatcher(maxWorkers int, queueSize int) *Dispatcher {
+func NewDispatcher(maxWorkers int, queueSize int) (*Dispatcher, error) {
+	if maxWorkers < 1 {
+		return nil, ErrNoWorkers
+	}
+
+	if queueSize < 1 {
+		return nil, ErrZeroQueue
+	}
 	pool := make(chan chan Job, maxWorkers)
 	jobq := make(chan Job, queueSize)
 	errors := make(chan error)
@@ -49,7 +67,7 @@ func NewDispatcher(maxWorkers int, queueSize int) *Dispatcher {
 		WaitGroup:  &sync.WaitGroup{},
 		ErrorCh:    errors,
 		ResultCh:   done,
-	}
+	}, nil
 }
 
 // Enqueue one or many jobs to process
@@ -110,7 +128,7 @@ func (d *Dispatcher) dispatch() {
 func NewWorker(workerPool chan chan Job, errCh *chan error, resultCh *chan Result) Worker {
 	return Worker{
 		WorkerPool: workerPool,
-		JobChannel: make(chan Job),
+		jobCh:      make(chan Job),
 		quit:       make(chan bool),
 		errCh:      errCh,
 		resultCh:   resultCh,
@@ -123,10 +141,10 @@ func (w Worker) Start() {
 	go func() {
 		for {
 			// register the current worker into the worker queue.
-			w.WorkerPool <- w.JobChannel
+			w.WorkerPool <- w.jobCh
 
 			select {
-			case job := <-w.JobChannel:
+			case job := <-w.jobCh:
 				result, err := job.Execute()
 				if err != nil {
 					*w.errCh <- err
