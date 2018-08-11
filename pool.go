@@ -41,36 +41,42 @@ func NewDispatcher(maxWorkers int, queueSize int) *Dispatcher {
 	pool := make(chan chan Job, maxWorkers)
 	jobq := make(chan Job, queueSize)
 	errors := make(chan error)
+	done := make(chan bool)
 	return &Dispatcher{
 		JobQueue:   jobq,
 		MaxWorkers: maxWorkers,
 		WorkerPool: pool,
 		WaitGroup:  &sync.WaitGroup{},
 		ErrorCh:    errors,
-		DoneCh:     make(chan bool),
+		DoneCh:     done,
 	}
 }
 
-func (d *Dispatcher) Execute(joblist ...Job) {
+// Enqueue one or many jobs to process
+func (d *Dispatcher) Enqueue(joblist ...Job) {
 	d.WaitGroup.Add(len(joblist))
 	for _, job := range joblist {
 		d.JobQueue <- job
 	}
 }
 
+// Wait blocks until workers are done with their magic
 func (d *Dispatcher) Wait() {
 	d.WaitGroup.Wait()
 }
 
+// Run gets the workers ready to work and listens to what they have to say at the end of their job
 func (d *Dispatcher) Run() {
-	// starting n number of workers
+	// Worker initialization
 	for i := 0; i < d.MaxWorkers; i++ {
 		worker := NewWorker(d.WorkerPool, &d.ErrorCh, &d.DoneCh)
 		worker.Start()
 	}
 
-	// start the dispatcher routine
+	// Get ready to assign tasks
 	go d.dispatch()
+
+	// Listen for results or errors
 	go func() {
 		for {
 			select {
