@@ -10,7 +10,9 @@ import (
 type EchoJob struct{}
 
 func (e EchoJob) Execute() (Result, error) {
-	return Result{}, nil
+	return Result{
+		Response: "hello",
+	}, nil
 }
 
 func TestBootstrap(t *testing.T) {
@@ -58,5 +60,17 @@ func TestMixedErrors(t *testing.T) {
 	d.Wait()
 
 	assert.Equal(t, 2, len(d.Errors))
+}
 
+func TestAppendResults(t *testing.T) {
+	d, e := NewDispatcher(2, 5)
+	if e != nil {
+		t.Fail()
+	}
+	d.Run()
+	d.Enqueue(EchoJob{}, EchoJob{}, EchoJob{})
+
+	d.Wait()
+	assert.Equal(t, 3, len(d.Results))
+	assert.Equal(t, 0, len(d.Errors))
 }

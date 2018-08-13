@@ -44,7 +44,8 @@ type (
 		ErrorCh  chan error
 		ResultCh chan Result
 
-		Errors []error
+		Errors  []error
+		Results []Result
 	}
 )
 
@@ -100,7 +101,8 @@ func (d *Dispatcher) Run() {
 			select {
 			case err := <-d.ErrorCh:
 				d.Errors = append(d.Errors, err)
-			case <-d.ResultCh:
+			case res := <-d.ResultCh:
+				d.Results = append(d.Results, res)
 				d.WaitGroup.Done()
 			}
 		}
