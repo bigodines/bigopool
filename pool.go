@@ -30,8 +30,8 @@ type (
 		quit chan bool
 
 		// reporting channels
-		errCh    *chan error
-		resultCh *chan Result
+		errCh    chan error
+		resultCh chan Result
 	}
 
 	Dispatcher struct {
@@ -88,7 +88,7 @@ func (d *Dispatcher) Wait() {
 func (d *Dispatcher) Run() {
 	// Worker initialization
 	for i := 0; i < d.MaxWorkers; i++ {
-		worker := NewWorker(d.WorkerPool, &d.ErrorCh, &d.ResultCh)
+		worker := NewWorker(d.WorkerPool, d.ErrorCh, d.ResultCh)
 		worker.Start()
 	}
 
@@ -127,7 +127,7 @@ func (d *Dispatcher) dispatch() {
 
 // NewWorker creates a new worker that can be registered to a WorkerPool
 // and receive jobs
-func NewWorker(workerPool chan chan Job, errCh *chan error, resultCh *chan Result) Worker {
+func NewWorker(workerPool chan chan Job, errCh chan error, resultCh chan Result) Worker {
 	return Worker{
 		WorkerPool: workerPool,
 		jobCh:      make(chan Job),
@@ -149,9 +149,9 @@ func (w Worker) Start() {
 			case job := <-w.jobCh:
 				result, err := job.Execute()
 				if err != nil {
-					*w.errCh <- err
+					w.errCh <- err
 				}
-				*w.resultCh <- result
+				w.resultCh <- result
 			case <-w.quit:
 				// we have received a signal to stop
 				return
