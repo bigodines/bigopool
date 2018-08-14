@@ -20,7 +20,7 @@ func (j *TestJob) Execute() (gopool.Result, error) {
 
 add to your code:
 ```golang
-// configure dispatcher to run 5 workers with a queue of 100
+// configure dispatcher to run 5 workers with a queue of capacity 100
 dispatcher, err := gopool.NewDispatcher(5, 100)
 if err != nil {
     panic(err)
@@ -36,5 +36,6 @@ dispatcher.Wait()
 
 errs := dispatcher.Errors
 results := dispatcher.Results
-
 ```
+
+:boom:
