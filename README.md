@@ -12,7 +12,7 @@ implement this simple interface:
 type TestJob {
     // your properties go here
 }
-func (j *TestJob) Execute() (gopool.Result, error) {
+func (j TestJob) Execute() (gopool.Result, error) {
     // your logic here.
     // Result.Response is an interface{}
 }
