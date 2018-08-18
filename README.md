@@ -14,7 +14,7 @@ type TestJob {
 }
 func (j TestJob) Execute() (gopool.Result, error) {
     // your logic here.
-    // Result.Response is an interface{}
+    // Result is an interface{}
     return "anything", nil
 }
 ```
