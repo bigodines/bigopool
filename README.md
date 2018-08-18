@@ -38,9 +38,11 @@ results, errs := dispatcher.Wait()
 
 :boom:
 
-## Inspiration
+## Motivation
 
 This is my take on the approach outlined on this classic blog post: http://marcio.io/2015/07/handling-1-million-requests-per-minute-with-golang/
+
+I've added support to errors and results
 
 ## Contributing
 

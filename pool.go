@@ -87,8 +87,10 @@ func (d *Dispatcher) Run() {
 		for {
 			select {
 			case err := <-d.ErrorCh:
+				// If you are changing this code, please note this is not a thread safe append()
 				d.Errors = append(d.Errors, err)
 			case res := <-d.ResultCh:
+				// If you are changing this code, please note this is not a thread safe append()
 				d.Results = append(d.Results, res)
 				d.wg.Done()
 			}
