@@ -85,3 +85,23 @@ func TestInvalid(t *testing.T) {
 		t.Fail()
 	}
 }
+
+// Benchmarks
+func benchmarkEchoJob(w, q int, b *testing.B) {
+	d, e := NewDispatcher(w, q)
+	if e != nil {
+		b.Fatal()
+	}
+	d.Run()
+
+	for i := 0; i < b.N; i++ {
+		d.Enqueue(EchoJob{})
+	}
+
+	d.Wait()
+}
+
+func Benchmark10Workers100Queue(b *testing.B)    { benchmarkEchoJob(10, 100, b) }
+func Benchmark20Workers100Queue(b *testing.B)    { benchmarkEchoJob(20, 100, b) }
+func Benchmark20Workers10000Queue(b *testing.B)  { benchmarkEchoJob(20, 10000, b) }
+func Benchmark100Workers10000Queue(b *testing.B) { benchmarkEchoJob(100, 10000, b) }
