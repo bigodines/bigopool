@@ -45,3 +45,7 @@ This is my take on the approach outlined on this classic blog post: http://marci
 ## Contributing
 
 If you can fix a bug or make it faster, I'll buy you coffee. PRs that drop code coverage will not be merged.
+
+## License
+
+MIT
