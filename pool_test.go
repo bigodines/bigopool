@@ -11,7 +11,7 @@ type EchoJob struct{}
 
 func (e EchoJob) Execute() (Result, error) {
 	return Result{
-		Response: "hello",
+		Body: "hello",
 	}, nil
 }
 

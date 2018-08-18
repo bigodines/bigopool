@@ -17,7 +17,7 @@ type (
 	}
 
 	Result struct {
-		Response interface{}
+		Body interface{}
 	}
 
 	Worker struct {
@@ -37,7 +37,7 @@ type (
 	Dispatcher struct {
 		JobQueue   chan Job
 		MaxWorkers int
-		WaitGroup  *sync.WaitGroup
+		wg         *sync.WaitGroup
 		// A pool of workers channels that are registered with the dispatcher
 		WorkerPool chan chan Job
 		// Collect errors
@@ -65,7 +65,7 @@ func NewDispatcher(maxWorkers int, queueSize int) (*Dispatcher, error) {
 		JobQueue:   jobq,
 		MaxWorkers: maxWorkers,
 		WorkerPool: pool,
-		WaitGroup:  &sync.WaitGroup{},
+		wg:         &sync.WaitGroup{},
 		ErrorCh:    errors,
 		ResultCh:   done,
 	}, nil
@@ -73,7 +73,7 @@ func NewDispatcher(maxWorkers int, queueSize int) (*Dispatcher, error) {
 
 // Enqueue one or many jobs to process
 func (d *Dispatcher) Enqueue(joblist ...Job) {
-	d.WaitGroup.Add(len(joblist))
+	d.wg.Add(len(joblist))
 	for _, job := range joblist {
 		d.JobQueue <- job
 	}
@@ -81,7 +81,7 @@ func (d *Dispatcher) Enqueue(joblist ...Job) {
 
 // Wait blocks until workers are done with their magic
 func (d *Dispatcher) Wait() {
-	d.WaitGroup.Wait()
+	d.wg.Wait()
 }
 
 // Run gets the workers ready to work and listens to what they have to say at the end of their job
@@ -103,7 +103,7 @@ func (d *Dispatcher) Run() {
 				d.Errors = append(d.Errors, err)
 			case res := <-d.ResultCh:
 				d.Results = append(d.Results, res)
-				d.WaitGroup.Done()
+				d.wg.Done()
 			}
 		}
 	}()
