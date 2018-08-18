@@ -11,7 +11,7 @@ var (
 )
 
 type (
-	// gopool can process anything that implements this interface
+	// Job interface allows gopool to process anything that implements Execute()
 	Job interface {
 		Execute() (Result, error)
 	}
@@ -19,21 +19,23 @@ type (
 	// Result can be anything defined by the worker
 	Result interface{}
 
+	// Dispatcher is responsible for orchestrating jobs to workers and reporting results back
 	Dispatcher struct {
-		JobQueue   chan Job
+		jobQueue   chan Job
 		MaxWorkers int
 		wg         *sync.WaitGroup
 		// A pool of workers channels that are registered with the dispatcher
-		WorkerPool chan chan Job
+		workerPool chan chan Job
 		// Collect errors
-		ErrorCh  chan error
-		ResultCh chan Result
+		errorCh  chan error
+		resultCh chan Result
 
 		Errors  []error
 		Results []Result
 	}
 )
 
+// NewDispatcher creates a new dispatcher
 func NewDispatcher(maxWorkers int, queueSize int) (*Dispatcher, error) {
 	if maxWorkers < 1 {
 		return nil, ErrNoWorkers
@@ -47,12 +49,12 @@ func NewDispatcher(maxWorkers int, queueSize int) (*Dispatcher, error) {
 	errors := make(chan error)
 	done := make(chan Result)
 	return &Dispatcher{
-		JobQueue:   jobq,
+		jobQueue:   jobq,
 		MaxWorkers: maxWorkers,
-		WorkerPool: pool,
+		workerPool: pool,
 		wg:         &sync.WaitGroup{},
-		ErrorCh:    errors,
-		ResultCh:   done,
+		errorCh:    errors,
+		resultCh:   done,
 	}, nil
 }
 
@@ -60,7 +62,7 @@ func NewDispatcher(maxWorkers int, queueSize int) (*Dispatcher, error) {
 func (d *Dispatcher) Enqueue(joblist ...Job) {
 	d.wg.Add(len(joblist))
 	for _, job := range joblist {
-		d.JobQueue <- job
+		d.jobQueue <- job
 	}
 }
 
@@ -75,7 +77,7 @@ func (d *Dispatcher) Wait() ([]Result, []error) {
 func (d *Dispatcher) Run() {
 	// Worker initialization
 	for i := 0; i < d.MaxWorkers; i++ {
-		worker := NewWorker(d.WorkerPool, d.ErrorCh, d.ResultCh)
+		worker := NewWorker(d.workerPool, d.errorCh, d.resultCh)
 		worker.Start()
 	}
 
@@ -86,10 +88,10 @@ func (d *Dispatcher) Run() {
 	go func() {
 		for {
 			select {
-			case err := <-d.ErrorCh:
+			case err := <-d.errorCh:
 				// If you are changing this code, please note this is not a thread safe append()
 				d.Errors = append(d.Errors, err)
-			case res := <-d.ResultCh:
+			case res := <-d.resultCh:
 				// If you are changing this code, please note this is not a thread safe append()
 				d.Results = append(d.Results, res)
 				d.wg.Done()
@@ -101,12 +103,12 @@ func (d *Dispatcher) Run() {
 func (d *Dispatcher) dispatch() {
 	for {
 		select {
-		case job := <-d.JobQueue:
+		case job := <-d.jobQueue:
 			// a job request has been received
 			go func(job Job) {
 				// try to obtain a worker job channel that is available.
 				// this will block until a worker is idle
-				jobChannel := <-d.WorkerPool
+				jobChannel := <-d.workerPool
 				// dispatch the job to the worker job channel
 				jobChannel <- job
 			}(job)

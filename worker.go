@@ -3,7 +3,7 @@ package gopool
 type (
 	Worker struct {
 		// A pool of workers channels that are registered with the dispatcher
-		WorkerPool chan chan Job
+		workerPool chan chan Job
 		// A channel for receiving a job that was dispatched
 		jobCh chan Job
 		// A channel for receiving a worker termination signal
@@ -16,11 +16,11 @@ type (
 	}
 )
 
-// NewWorker creates a new worker that can be registered to a WorkerPool
+// NewWorker creates a new worker that can be registered to a workerPool
 // and receive jobs
 func NewWorker(workerPool chan chan Job, errCh chan error, resultCh chan Result) Worker {
 	return Worker{
-		WorkerPool: workerPool,
+		workerPool: workerPool,
 		jobCh:      make(chan Job),
 		quit:       make(chan bool),
 		errCh:      errCh,
@@ -34,7 +34,7 @@ func (w Worker) Start() {
 	go func() {
 		for {
 			// register the current worker into the worker queue.
-			w.WorkerPool <- w.jobCh
+			w.workerPool <- w.jobCh
 
 			select {
 			case job := <-w.jobCh:
