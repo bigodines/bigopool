@@ -101,7 +101,9 @@ func benchmarkEchoJob(w, q int, b *testing.B) {
 	d.Wait()
 }
 
+func Benchmark1Workers1Queue(b *testing.B)       { benchmarkEchoJob(1, 1, b) }
+func Benchmark5Workers1000Queue(b *testing.B)    { benchmarkEchoJob(5, 1000, b) }
 func Benchmark10Workers100Queue(b *testing.B)    { benchmarkEchoJob(10, 100, b) }
-func Benchmark20Workers100Queue(b *testing.B)    { benchmarkEchoJob(20, 100, b) }
+func Benchmark20Workers200Queue(b *testing.B)    { benchmarkEchoJob(20, 100, b) }
 func Benchmark20Workers10000Queue(b *testing.B)  { benchmarkEchoJob(20, 10000, b) }
 func Benchmark100Workers10000Queue(b *testing.B) { benchmarkEchoJob(100, 10000, b) }
