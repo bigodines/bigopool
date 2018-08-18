@@ -49,6 +49,13 @@ I've added support to errors and results
 If you can fix a bug or make it faster, I'll buy you coffee. PRs that drop code coverage will not be merged.
 
 ## Benchmarks
+```
+box specs:
+
+MacBook Pro (Retina, 15-inch, Mid 2015)
+Processor 2,5 GHz Intel Core i7
+Memory 16 GB 1600 MHz DDR3
+```
 ```bash
 ➜  gopool git:(master) go test -bench=.  -benchmem=true -cpu=1,2,4,8,16                                                                                                                                                                    
 goos: darwin                                                                                                                                                                                                                               
