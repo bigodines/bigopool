@@ -6,9 +6,6 @@ type (
 		workerPool chan chan Job
 		// A channel for receiving a job that was dispatched
 		jobCh chan Job
-		// A channel for receiving a worker termination signal
-		// (quits after processing)
-		quit chan bool
 
 		// reporting channels
 		errCh    chan error
@@ -22,7 +19,6 @@ func NewWorker(workerPool chan chan Job, errCh chan error, resultCh chan Result)
 	return Worker{
 		workerPool: workerPool,
 		jobCh:      make(chan Job),
-		quit:       make(chan bool),
 		errCh:      errCh,
 		resultCh:   resultCh,
 	}

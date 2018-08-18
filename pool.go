@@ -26,6 +26,7 @@ type (
 		wg         *sync.WaitGroup
 		// A pool of workers channels that are registered with the dispatcher
 		workerPool chan chan Job
+		quitCh     chan bool
 		// Collect errors
 		errorCh  chan error
 		resultCh chan Result
@@ -48,6 +49,7 @@ func NewDispatcher(maxWorkers int, queueSize int) (*Dispatcher, error) {
 	jobq := make(chan Job, queueSize)
 	errors := make(chan error)
 	done := make(chan Result)
+	quit := make(chan bool, 1)
 	return &Dispatcher{
 		jobQueue:   jobq,
 		MaxWorkers: maxWorkers,
@@ -55,6 +57,7 @@ func NewDispatcher(maxWorkers int, queueSize int) (*Dispatcher, error) {
 		wg:         &sync.WaitGroup{},
 		errorCh:    errors,
 		resultCh:   done,
+		quitCh:     quit,
 	}, nil
 }
 
@@ -70,6 +73,9 @@ func (d *Dispatcher) Enqueue(joblist ...Job) {
 // return the results and errors
 func (d *Dispatcher) Wait() ([]Result, []error) {
 	d.wg.Wait()
+	d.quitCh <- true
+	close(d.errorCh)
+	close(d.resultCh)
 	return d.Results, d.Errors
 }
 
@@ -95,6 +101,8 @@ func (d *Dispatcher) Run() {
 				// If you are changing this code, please note this is not a thread safe append()
 				d.Results = append(d.Results, res)
 				d.wg.Done()
+			case <-d.quitCh:
+				return
 			}
 		}
 	}()
