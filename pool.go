@@ -65,8 +65,10 @@ func (d *Dispatcher) Enqueue(joblist ...Job) {
 }
 
 // Wait blocks until workers are done with their magic
-func (d *Dispatcher) Wait() {
+// return the results and errors
+func (d *Dispatcher) Wait() ([]Result, []error) {
 	d.wg.Wait()
+	return d.Results, d.Errors
 }
 
 // Run gets the workers ready to work and listens to what they have to say at the end of their job

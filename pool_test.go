@@ -56,9 +56,9 @@ func TestMixedErrors(t *testing.T) {
 	}
 
 	d.Enqueue(ErrorJob{})
-	d.Wait()
+	_, errs := d.Wait()
 
-	assert.Equal(t, 2, len(d.Errors))
+	assert.Equal(t, 2, len(errs))
 }
 
 func TestAppendResults(t *testing.T) {
@@ -69,9 +69,9 @@ func TestAppendResults(t *testing.T) {
 	d.Run()
 	d.Enqueue(EchoJob{}, EchoJob{}, EchoJob{})
 
-	d.Wait()
-	assert.Equal(t, 3, len(d.Results))
-	assert.Equal(t, 0, len(d.Errors))
+	results, errors := d.Wait()
+	assert.Equal(t, 3, len(results))
+	assert.Equal(t, 0, len(errors))
 }
 
 func TestInvalid(t *testing.T) {

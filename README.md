@@ -15,6 +15,7 @@ type TestJob {
 func (j TestJob) Execute() (gopool.Result, error) {
     // your logic here.
     // Result.Response is an interface{}
+    return "anything", nil
 }
 ```
 
@@ -32,10 +33,15 @@ dispatcher.Enqueue(TestJob{}) // <-- add one job
 dispatcher.Enqueue(TestJob{}, TestJob{}) // <-- add multiple jobs
 
 // wait for workers to finish (this is a blocking call)
-dispatcher.Wait() 
-
-errs := dispatcher.Errors
-results := dispatcher.Results
+results, errs := dispatcher.Wait() 
 ```
 
 :boom:
+
+## Inspiration
+
+This is my take on the approach outlined on this classic blog post: http://marcio.io/2015/07/handling-1-million-requests-per-minute-with-golang/
+
+## Contributing
+
+If you can fix a bug or make it faster, I'll buy you coffee. PRs that drop code coverage will not be merged.
