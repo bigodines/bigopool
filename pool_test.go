@@ -10,9 +10,7 @@ import (
 type EchoJob struct{}
 
 func (e EchoJob) Execute() (Result, error) {
-	return Result{
-		Body: "hello",
-	}, nil
+	return "hello", nil
 }
 
 func TestBootstrap(t *testing.T) {
@@ -28,9 +26,10 @@ func TestBootstrap(t *testing.T) {
 }
 
 type ErrorJob struct{}
+type ret struct{}
 
 func (e ErrorJob) Execute() (Result, error) {
-	return Result{}, fmt.Errorf("Errored")
+	return ret{}, fmt.Errorf("Errored")
 }
 func TestErrors(t *testing.T) {
 	d, e := NewDispatcher(2, 2)
@@ -73,4 +72,16 @@ func TestAppendResults(t *testing.T) {
 	d.Wait()
 	assert.Equal(t, 3, len(d.Results))
 	assert.Equal(t, 0, len(d.Errors))
+}
+
+func TestInvalid(t *testing.T) {
+	_, e := NewDispatcher(0, 1000)
+	if e == nil {
+		t.Fail()
+	}
+
+	_, e = NewDispatcher(10, 0)
+	if e == nil {
+		t.Fail()
+	}
 }

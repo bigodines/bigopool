@@ -16,9 +16,8 @@ type (
 		Execute() (Result, error)
 	}
 
-	Result struct {
-		Body interface{}
-	}
+	// Result can be anything defined by the worker
+	Result interface{}
 
 	Dispatcher struct {
 		JobQueue   chan Job

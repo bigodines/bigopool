@@ -43,9 +43,6 @@ func (w Worker) Start() {
 					w.errCh <- err
 				}
 				w.resultCh <- result
-			case <-w.quit:
-				// we have received a signal to stop
-				return
 			}
 		}
 	}()
