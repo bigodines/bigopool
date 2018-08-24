@@ -1,6 +1,6 @@
-# gopool
+# bigopool
 
-`gopool` is a small library that implements high performance worker pool in Golang and allows `error`/`result` handling in the main thread.
+`bigopool` is a small library that implements high performance worker pool in Golang and allows `error`/`result` handling in the main thread.
 
 ## Quickstart
 
@@ -33,7 +33,7 @@ dispatcher.Enqueue(TestJob{}) // <-- add one job
 dispatcher.Enqueue(TestJob{}, TestJob{}) // <-- add multiple jobs
 
 // wait for workers to finish (this is a blocking call)
-results, errs := dispatcher.Wait() 
+results, errs := dispatcher.Wait()
 ```
 
 :boom:
