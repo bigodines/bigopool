@@ -1,4 +1,4 @@
-package gopool
+package bigopool
 
 type (
 	Worker struct {

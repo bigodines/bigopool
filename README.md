@@ -1,18 +1,18 @@
-# gopool
+# bigopool
 
-`gopool` is a small library that implements high performance worker pool in Golang and allows `error`/`result` handling in the main thread.
+`bigopool` is a small library that implements high performance worker pool in Golang and allows `error`/`result` handling in the main thread.
 
 ## Quickstart
 
 install:
-`go get -u github.com/bigodines/gopool`
+`go get -u github.com/bigodines/bigopool`
 
 implement this simple interface:
 ```golang
 type TestJob {
     // your properties go here
 }
-func (j TestJob) Execute() (gopool.Result, error) {
+func (j TestJob) Execute() (bigopool.Result, error) {
     // your logic here.
     // Result is an interface{}
     return "anything", nil
@@ -22,7 +22,7 @@ func (j TestJob) Execute() (gopool.Result, error) {
 add to your code:
 ```golang
 // configure dispatcher to run 5 workers with a queue of capacity 100
-dispatcher, err := gopool.NewDispatcher(5, 100)
+dispatcher, err := bigopool.NewDispatcher(5, 100)
 if err != nil {
     panic(err)
 }
@@ -57,10 +57,10 @@ Processor 2,5 GHz Intel Core i7
 Memory 16 GB 1600 MHz DDR3
 ```
 ```bash
-➜  gopool git:(master) go test -bench=.  -benchmem=true -cpu=1,2,4,8,16                                                                                                                                                                    
+➜  bigopool git:(master) go test -bench=.  -benchmem=true -cpu=1,2,4,8,16                                                                                                                                                                    
 goos: darwin                                                                                                                                                                                                                               
 goarch: amd64
-pkg: github.com/bigodines/gopool
+pkg: github.com/bigodines/bigopool
 Benchmark1Workers1Queue                  1000000              4202 ns/op             256 B/op          0 allocs/op
 Benchmark1Workers1Queue-2                1000000              2139 ns/op             176 B/op          0 allocs/op
 Benchmark1Workers1Queue-4                1000000              1965 ns/op             160 B/op          0 allocs/op
@@ -92,7 +92,7 @@ Benchmark100Workers10000Queue-4          2000000               816 ns/op        
 Benchmark100Workers10000Queue-8          1000000              1172 ns/op             152 B/op          0 allocs/op
 Benchmark100Workers10000Queue-16         2000000              1107 ns/op             128 B/op          0 allocs/op
 PASS
-ok      github.com/bigodines/gopool     86.650s
+ok      github.com/bigodines/bigopool     86.650s
 
 ```
 

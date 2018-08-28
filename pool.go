@@ -1,4 +1,4 @@
-package gopool
+package bigopool
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ var (
 )
 
 type (
-	// Job interface allows gopool to process anything that implements Execute()
+	// Job interface allows bigopool to process anything that implements Execute()
 	Job interface {
 		Execute() (Result, error)
 	}
