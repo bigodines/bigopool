@@ -40,6 +40,7 @@ results, errs := dispatcher.Wait()
 
 ## Parallel
 
+run multiple functions in parallel:
 ```go
 func UploadAndDownload() error {
   var email string
