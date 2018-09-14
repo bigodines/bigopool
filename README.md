@@ -33,10 +33,36 @@ dispatcher.Enqueue(TestJob{}) // <-- add one job
 dispatcher.Enqueue(TestJob{}, TestJob{}) // <-- add multiple jobs
 
 // wait for workers to finish (this is a blocking call)
-results, errs := dispatcher.Wait() 
+results, errs := dispatcher.Wait()
 ```
 
 :boom:
+
+## Parallel
+
+```go
+func UploadAndDownload() error {
+  var email string
+  errs := async.Parallel(
+    func() error {
+      return api.Post(Request{Email: "bob@gmail.com"})
+    },
+
+    func() error {
+      user, err := api.Get(Request{ID: 1234})
+      if err != nil {
+        return err
+      }
+
+      email = user.Email
+      return nil
+    },
+  )
+
+  fmt.Println("email:", email)
+  return errs.ToError()
+}
+```
 
 ## Motivation
 
