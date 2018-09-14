@@ -44,7 +44,7 @@ run multiple functions in parallel:
 ```go
 func UploadAndDownload() error {
   var email string
-  errs := async.Parallel(
+  errs := bigopool.Parallel(
     func() error {
       return api.Post(Request{Email: "bob@gmail.com"})
     },
