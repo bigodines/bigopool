@@ -1,4 +1,4 @@
-package async
+package bigopool
 
 import (
 	"errors"
