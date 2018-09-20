@@ -2,10 +2,16 @@
 
 `bigopool` is a small library that implements high performance worker pool in Golang and allows `error`/`result` handling in the main thread.
 
+I also provides a thread safe paralell processing abstraction 
+
 ## Quickstart
 
 install:
 `go get -u github.com/bigodines/bigopool`
+
+### Worker pool
+
+Use this whenever the number of jobs you have is too large to run as goroutines at the same time.
 
 implement this simple interface:
 ```golang
@@ -34,11 +40,15 @@ dispatcher.Enqueue(TestJob{}, TestJob{}) // <-- add multiple jobs
 
 // wait for workers to finish (this is a blocking call)
 results, errs := dispatcher.Wait()
+// Note we've opted to use our own thread safe error module (it still implements the `error` interface but if you want to get a []error, 
+//  use errs.All())
 ```
 
 :boom:
 
-## Parallel
+### Parallel processing
+
+Use this if you don't need worker pools and just want to execute tasks in parelell
 
 run multiple functions in parallel:
 ```go
@@ -46,7 +56,7 @@ func UploadAndDownload() error {
   var email string
   errs := bigopool.Parallel(
     func() error {
-      return api.Post(Request{Email: "bob@gmail.com"})
+      return api.Post(Request{Order: 123123})
     },
 
     func() error {
