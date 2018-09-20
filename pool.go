@@ -31,7 +31,7 @@ type (
 		errorCh  chan error
 		resultCh chan Result
 
-		Errors  []error
+		Errors  errs
 		Results []Result
 	}
 )
@@ -71,12 +71,12 @@ func (d *Dispatcher) Enqueue(joblist ...Job) {
 
 // Wait blocks until workers are done with their magic
 // return the results and errors
-func (d *Dispatcher) Wait() ([]Result, []error) {
+func (d *Dispatcher) Wait() ([]Result, Errors) {
 	d.wg.Wait()
 	d.quitCh <- true
 	close(d.errorCh)
 	close(d.resultCh)
-	return d.Results, d.Errors
+	return d.Results, &d.Errors
 }
 
 // Run gets the workers ready to work and listens to what they have to say at the end of their job
@@ -95,8 +95,7 @@ func (d *Dispatcher) Run() {
 		for {
 			select {
 			case err := <-d.errorCh:
-				// If you are changing this code, please note this is not a thread safe append()
-				d.Errors = append(d.Errors, err)
+				d.Errors.append(err)
 			case res := <-d.resultCh:
 				// If you are changing this code, please note this is not a thread safe append()
 				d.Results = append(d.Results, res)

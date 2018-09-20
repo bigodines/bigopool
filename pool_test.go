@@ -40,7 +40,7 @@ func TestErrors(t *testing.T) {
 	d.Enqueue(ErrorJob{})
 	d.Wait()
 
-	assert.Equal(t, 1, len(d.Errors))
+	assert.Equal(t, 1, len(d.Errors.All()))
 }
 
 func TestMixedErrors(t *testing.T) {
@@ -58,7 +58,7 @@ func TestMixedErrors(t *testing.T) {
 	d.Enqueue(ErrorJob{})
 	_, errs := d.Wait()
 
-	assert.Equal(t, 2, len(errs))
+	assert.Equal(t, 2, len(errs.All()))
 }
 
 func TestAppendResults(t *testing.T) {
@@ -71,7 +71,7 @@ func TestAppendResults(t *testing.T) {
 
 	results, errors := d.Wait()
 	assert.Equal(t, 3, len(results))
-	assert.Equal(t, 0, len(errors))
+	assert.Equal(t, 0, len(errors.All()))
 }
 
 func TestInvalid(t *testing.T) {
