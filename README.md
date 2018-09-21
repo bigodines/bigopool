@@ -9,7 +9,6 @@ It also provides a thread safe paralell processing abstraction
 install:
 `go get -u github.com/bigodines/bigopool`
 
-
 ### Worker pool
 
 Use this whenever the number of jobs you have is too large to run as goroutines at the same time.
