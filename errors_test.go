@@ -33,3 +33,15 @@ func TestIsEmpty(t *testing.T) {
 	ee.append(errors.New("error 2"))
 	assert.False(t, ee.IsEmpty())
 }
+
+func TestError(t *testing.T) {
+	ee := errs{}
+
+	ee.append(errors.New("ok"))
+
+	assert.Equal(t, "\nok", ee.Error())
+
+	ee.append(errors.New("two"))
+
+	assert.Equal(t, "\nok\ntwo", ee.Error())
+}
