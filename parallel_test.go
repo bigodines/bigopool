@@ -96,12 +96,13 @@ func TestCancelableParallelWithError(t *testing.T) {
 			return errors.New("test")
 		},
 		func(c context.Context) error {
-			time.Sleep(100 * time.Millisecond)
+			// Set a timeout in case the context isn't canceled.
+			timer := time.NewTimer(100 * time.Millisecond)
 
 			select {
 			case <-c.Done():
 				return nil
-			default:
+			case <-timer.C:
 				// Can't t.Fatal since we aren't in the main goroutine
 				t.Log("Did not cancel context due to previous error")
 				t.Fail()
