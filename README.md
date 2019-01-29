@@ -2,7 +2,7 @@
 
 `bigopool` is a small library that implements high performance worker pool in Golang and allows `error`/`result` handling in the main thread.
 
-It also provides a thread safe paralell processing abstraction 
+It also provides a thread safe parallel processing abstraction
 
 ## Quickstart
 
@@ -48,7 +48,7 @@ results, errs := dispatcher.Wait()
 
 ### Parallel processing
 
-Use this if you don't need worker pools and just want to execute tasks in parelell
+Use this if you don't need worker pools and just want to execute tasks in parallel
 
 run multiple functions in parallel:
 ```go
