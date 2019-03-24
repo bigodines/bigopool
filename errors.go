@@ -11,17 +11,28 @@ type (
 		All() []error
 		ToError() error
 		IsEmpty() bool
+		Append(err error)
 	}
 
 	// errs is a thread safe struct for appending a slice of errors.
 	errs struct {
-		mutex sync.Mutex
+		mutex sync.RWMutex
 		all   []error
 	}
 )
 
+// Creates an empty error struct
+func NewErrors() *errs {
+	return &errs{
+		all:   []error{},
+		mutex: sync.RWMutex{},
+	}
+}
+
 // All returns the underlyings slice of errors.
 func (ee *errs) All() []error {
+	ee.mutex.RLock()
+	defer ee.mutex.RUnlock()
 	return ee.all
 }
 
@@ -36,7 +47,7 @@ func (ee *errs) ToError() error {
 
 // IsEmpty is true if there are no errors.
 func (ee *errs) IsEmpty() bool {
-	return len(ee.all) == 0
+	return len(ee.All()) == 0
 }
 
 // Error implements the error interface.
@@ -50,8 +61,9 @@ func (ee *errs) Error() string {
 }
 
 // append safely appends to the error slice.
-func (ee *errs) append(err error) {
+func (ee *errs) Append(err error) {
 	ee.mutex.Lock()
+	defer ee.mutex.Unlock()
 	ee.all = append(ee.all, err)
-	ee.mutex.Unlock()
+
 }

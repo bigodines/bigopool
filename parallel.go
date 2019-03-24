@@ -8,7 +8,7 @@ import (
 // Parallel runs multiple functions in parallel and collects the errors safely.
 func Parallel(ff ...func() error) Errors {
 	var wg sync.WaitGroup
-	var ee errs
+	ee := NewErrors()
 
 	wg.Add(len(ff))
 
@@ -19,21 +19,21 @@ func Parallel(ff ...func() error) Errors {
 			defer wg.Done()
 
 			if err := f(); err != nil {
-				ee.append(err)
+				ee.Append(err)
 			}
 		}()
 	}
 
 	wg.Wait()
 
-	return &ee
+	return ee
 }
 
 // CancelableParallel runs multiple functions in parallel and collects the errors safely, while canceling the context
 // passed to the remaining functions as soon as a function returns an error.
 func CancelableParallel(ctx context.Context, ff ...func(context.Context) error) Errors {
 	var wg sync.WaitGroup
-	var ee errs
+	ee := NewErrors()
 
 	cancelCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -48,12 +48,12 @@ func CancelableParallel(ctx context.Context, ff ...func(context.Context) error) 
 
 			if err := f(cancelCtx); err != nil {
 				cancel()
-				ee.append(err)
+				ee.Append(err)
 			}
 		}()
 	}
 
 	wg.Wait()
 
-	return &ee
+	return ee
 }
