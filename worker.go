@@ -10,17 +10,20 @@ type (
 		// reporting channels
 		errCh    chan error
 		resultCh chan Result
+
+		quitCh chan bool
 	}
 )
 
 // NewWorker creates a new worker that can be registered to a workerPool
 // and receive jobs
-func NewWorker(workerPool chan chan Job, errCh chan error, resultCh chan Result) Worker {
+func NewWorker(workerPool chan chan Job, errCh chan error, resultCh chan Result, quitCh chan bool) Worker {
 	return Worker{
 		workerPool: workerPool,
 		jobCh:      make(chan Job),
 		errCh:      errCh,
 		resultCh:   resultCh,
+		quitCh:     quitCh,
 	}
 }
 
@@ -39,6 +42,7 @@ func (w Worker) Start() {
 					w.errCh <- err
 				}
 				w.resultCh <- result
+				w.quitCh <- true
 			}
 		}
 	}()
