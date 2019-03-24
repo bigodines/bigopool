@@ -79,6 +79,7 @@ func (d *Dispatcher) Wait() ([]Result, Errors) {
 	d.wg.Wait()
 	close(d.errorCh)
 	close(d.resultCh)
+	// prevent race with d.Results append
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	return d.Results, d.Errors
