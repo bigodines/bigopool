@@ -1,4 +1,4 @@
-# bigopool
+# bigopool [![codecov](https://codecov.io/gh/bigodines/bigopool/branch/master/graph/badge.svg)](https://codecov.io/gh/bigodines/bigopool) [![Build Status](https://travis-ci.org/bigodines/bigopool.png)](https://travis-ci.org/bigodines/bigopool)
 
 `bigopool` is a small library that implements high performance worker pool in Golang and allows `error`/`result` handling in the main thread.
 
@@ -40,7 +40,7 @@ dispatcher.Enqueue(TestJob{}, TestJob{}) // <-- add multiple jobs
 
 // wait for workers to finish (this is a blocking call)
 results, errs := dispatcher.Wait()
-// Note we've opted to use our own thread safe error module (it still implements the `error` interface but if you want to get a []error, 
+// Note we've opted to use our own thread safe error module (it still implements the `error` interface but if you want to get a []error,
 //  use errs.All())
 ```
 
@@ -94,8 +94,8 @@ Processor 2,5 GHz Intel Core i7
 Memory 16 GB 1600 MHz DDR3
 ```
 ```bash
-➜  bigopool git:(master) go test -bench=.  -benchmem=true -cpu=1,2,4,8,16                                                                                                                                                                    
-goos: darwin                                                                                                                                                                                                                               
+➜  bigopool git:(master) go test -bench=.  -benchmem=true -cpu=1,2,4,8,16
+goos: darwin
 goarch: amd64
 pkg: github.com/bigodines/bigopool
 Benchmark1Workers1Queue                  1000000              4202 ns/op             256 B/op          0 allocs/op
