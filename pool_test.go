@@ -2,7 +2,6 @@ package bigopool
 
 import (
 	"fmt"
-
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -85,17 +84,6 @@ func TestInvalid(t *testing.T) {
 	if e == nil {
 		t.Fail()
 	}
-}
-
-func TestNoJobs(t *testing.T) {
-	d, e := NewDispatcher(1, 1)
-	if e != nil {
-		t.Fail()
-	}
-	d.Run()
-	r, errs := d.Wait()
-	assert.Equal(t, 0, len(errs.All()))
-	assert.Equal(t, 0, len(r))
 }
 
 // Benchmarks
