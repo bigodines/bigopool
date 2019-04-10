@@ -21,10 +21,9 @@ type (
 
 	// Dispatcher is responsible for orchestrating jobs to workers and reporting results back
 	Dispatcher struct {
-		mu         *sync.Mutex
 		jobQueue   chan Job
 		MaxWorkers int
-		wg         sync.WaitGroup
+		wg         *sync.WaitGroup
 		// A pool of workers channels that are registered with the dispatcher
 		workerPool chan chan Job
 		quitCh     chan bool
@@ -32,7 +31,7 @@ type (
 		errorCh  chan error
 		resultCh chan Result
 
-		Errors  Errors
+		Errors  errs
 		Results []Result
 	}
 )
@@ -51,17 +50,14 @@ func NewDispatcher(maxWorkers int, queueSize int) (*Dispatcher, error) {
 	errors := make(chan error)
 	done := make(chan Result)
 	quit := make(chan bool, 1)
-	errs := NewErrors()
 	return &Dispatcher{
-		mu:         new(sync.Mutex),
 		jobQueue:   jobq,
 		MaxWorkers: maxWorkers,
 		workerPool: pool,
-		wg:         sync.WaitGroup{},
+		wg:         &sync.WaitGroup{},
 		errorCh:    errors,
 		resultCh:   done,
 		quitCh:     quit,
-		Errors:     errs,
 	}, nil
 }
 
@@ -76,20 +72,23 @@ func (d *Dispatcher) Enqueue(joblist ...Job) {
 // Wait blocks until workers are done with their magic
 // return the results and errors
 func (d *Dispatcher) Wait() ([]Result, Errors) {
+	defer d.cleanUp()
 	d.wg.Wait()
+	d.quitCh <- true
+	return d.Results, &d.Errors
+}
+
+func (d *Dispatcher) cleanUp() {
 	close(d.errorCh)
 	close(d.resultCh)
-	// prevent race with d.Results append
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	return d.Results, d.Errors
+	close(d.quitCh)
 }
 
 // Run gets the workers ready to work and listens to what they have to say at the end of their job
 func (d *Dispatcher) Run() {
 	// Worker initialization
 	for i := 0; i < d.MaxWorkers; i++ {
-		worker := NewWorker(d.workerPool, d.errorCh, d.resultCh, d.quitCh)
+		worker := NewWorker(d.workerPool, d.errorCh, d.resultCh)
 		worker.Start()
 	}
 
@@ -101,15 +100,13 @@ func (d *Dispatcher) Run() {
 		for {
 			select {
 			case err := <-d.errorCh:
-				if err != nil {
-					d.Errors.Append(err)
-				}
+				d.Errors.append(err)
 			case res := <-d.resultCh:
-				d.mu.Lock()
+				// If you are changing this code, please note this is not a thread safe append()
 				d.Results = append(d.Results, res)
-				d.mu.Unlock()
-			case <-d.quitCh:
 				d.wg.Done()
+			case <-d.quitCh:
+				return
 			}
 		}
 	}()
