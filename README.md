@@ -1,4 +1,4 @@
-# bigopool [![codecov](https://codecov.io/gh/bigodines/bigopool/branch/master/graph/badge.svg)](https://codecov.io/gh/bigodines/bigopool) [![Build Status](https://travis-ci.org/bigodines/bigopool.png)](https://travis-ci.org/bigodines/bigopool[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/bigodines/bigopool)
+# bigopool [![codecov](https://codecov.io/gh/bigodines/bigopool/branch/master/graph/badge.svg)](https://codecov.io/gh/bigodines/bigopool) [![Build Status](https://travis-ci.org/bigodines/bigopool.png)](https://travis-ci.org/bigodines/bigopool) [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/bigodines/bigopool)
 
 
 `bigopool` is a small library that implements high performance worker pool in Golang and allows `error`/`result` handling in the main thread.
