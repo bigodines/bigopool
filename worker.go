@@ -43,3 +43,8 @@ func (w Worker) Start() {
 		}
 	}()
 }
+
+// Bye is better than Die. This function clean up worker memory
+func (w Worker) Bye() {
+	close(w.jobCh)
+}

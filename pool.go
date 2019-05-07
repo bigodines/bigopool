@@ -82,6 +82,11 @@ func (d *Dispatcher) cleanUp() {
 	close(d.errorCh)
 	close(d.resultCh)
 	close(d.quitCh)
+	close(d.jobQueue)
+
+	for i := 0; i < d.MaxWorkers; i++) {
+
+	}
 }
 
 // Run gets the workers ready to work and listens to what they have to say at the end of their job
