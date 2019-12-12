@@ -2,8 +2,6 @@ package bigopool
 
 type (
 	Worker struct {
-		// A pool of workers channels that are registered with the dispatcher
-		workerPool chan chan Job
 		// A channel for receiving a job that was dispatched
 		jobCh chan Job
 
@@ -15,12 +13,11 @@ type (
 
 // NewWorker creates a new worker that can be registered to a workerPool
 // and receive jobs
-func NewWorker(workerPool chan chan Job, errCh chan error, resultCh chan Result) Worker {
+func NewWorker(jobCh chan Job, errCh chan error, resultCh chan Result) Worker {
 	return Worker{
-		workerPool: workerPool,
-		jobCh:      make(chan Job),
-		errCh:      errCh,
-		resultCh:   resultCh,
+		jobCh:    jobCh,
+		errCh:    errCh,
+		resultCh: resultCh,
 	}
 }
 
@@ -29,16 +26,20 @@ func NewWorker(workerPool chan chan Job, errCh chan error, resultCh chan Result)
 func (w Worker) Start() {
 	go func() {
 		for {
-			// register the current worker into the worker queue.
-			w.workerPool <- w.jobCh
-
 			select {
-			case job := <-w.jobCh:
-				result, err := job.Execute()
-				if err != nil {
-					w.errCh <- err
+			case job, more := <-w.jobCh:
+				if job != nil {
+					result, err := job.Execute()
+					if err != nil {
+						w.errCh <- err
+					}
+					w.resultCh <- result
 				}
-				w.resultCh <- result
+
+				// w.jobCh has been closed by Dispatcher.Wait(), so we're done.
+				if !more {
+					return
+				}
 			}
 		}
 	}()
