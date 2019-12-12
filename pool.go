@@ -79,6 +79,7 @@ func (d *Dispatcher) Wait() ([]Result, Errors) {
 }
 
 func (d *Dispatcher) cleanUp() {
+	close(d.jobQueue)
 	close(d.errorCh)
 	close(d.resultCh)
 	close(d.quitCh)
@@ -88,12 +89,9 @@ func (d *Dispatcher) cleanUp() {
 func (d *Dispatcher) Run() {
 	// Worker initialization
 	for i := 0; i < d.MaxWorkers; i++ {
-		worker := NewWorker(d.workerPool, d.errorCh, d.resultCh)
+		worker := NewWorker(d.jobQueue, d.errorCh, d.resultCh)
 		worker.Start()
 	}
-
-	// Get ready to assign tasks
-	go d.dispatch()
 
 	// Listen for results or errors
 	go func() {
@@ -110,20 +108,4 @@ func (d *Dispatcher) Run() {
 			}
 		}
 	}()
-}
-
-func (d *Dispatcher) dispatch() {
-	for {
-		select {
-		case job := <-d.jobQueue:
-			// a job request has been received
-			go func(job Job) {
-				// try to obtain a worker job channel that is available.
-				// this will block until a worker is idle
-				jobChannel := <-d.workerPool
-				// dispatch the job to the worker job channel
-				jobChannel <- job
-			}(job)
-		}
-	}
 }

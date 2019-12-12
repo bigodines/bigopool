@@ -2,7 +2,9 @@ package bigopool
 
 import (
 	"fmt"
+	"runtime"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -82,6 +84,24 @@ func TestInvalid(t *testing.T) {
 
 	_, e = NewDispatcher(10, 0)
 	if e == nil {
+		t.Fail()
+	}
+}
+
+func TestDispatcherCleanup(t *testing.T) {
+	ngr := runtime.NumGoroutine()
+	d, e := NewDispatcher(10, 20)
+	if e != nil {
+		t.Fail()
+	}
+
+	d.Run()
+	d.Enqueue(EchoJob{}, EchoJob{}, EchoJob{})
+	d.Wait()
+
+	// sleep so goroutines have time to exit
+	time.Sleep(1000 * time.Millisecond)
+	if ngr != runtime.NumGoroutine() {
 		t.Fail()
 	}
 }
