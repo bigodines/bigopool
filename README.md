@@ -76,12 +76,6 @@ func UploadAndDownload() error {
 }
 ```
 
-## Motivation
-
-This is my take on the approach outlined on this classic blog post: http://marcio.io/2015/07/handling-1-million-requests-per-minute-with-golang/
-
-I've added support to errors and results
-
 ## Contributing
 
 If you can fix a bug or make it faster, I'll buy you coffee. PRs that drop code coverage will not be merged.
