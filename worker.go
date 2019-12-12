@@ -13,7 +13,6 @@ type (
 
 // NewWorker creates a new worker that can be registered to a workerPool
 // and receive jobs
-//func NewWorker(workerPool chan chan Job, errCh chan error, resultCh chan Result) Worker {
 func NewWorker(jobCh chan Job, errCh chan error, resultCh chan Result) Worker {
 	return Worker{
 		jobCh:    jobCh,
