@@ -101,9 +101,7 @@ func TestDispatcherCleanup(t *testing.T) {
 
 	// sleep so goroutines have time to exit
 	time.Sleep(1000 * time.Millisecond)
-assert.Equal(t, ngr, runtime.NumGoroutine())
-		t.Fail()
-	}
+	assert.Equal(t, ngr, runtime.NumGoroutine())
 }
 
 // Benchmarks
