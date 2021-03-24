@@ -37,11 +37,26 @@ func TestIsEmpty(t *testing.T) {
 func TestError(t *testing.T) {
 	ee := errs{}
 
-	ee.append(errors.New("ok"))
+	ee.append(errors.New("one"))
 
-	assert.Equal(t, "\nok", ee.Error())
+	assert.Equal(t, "one", ee.Error())
 
 	ee.append(errors.New("two"))
 
-	assert.Equal(t, "\nok\ntwo", ee.Error())
+	assert.Equal(t, "one; two", ee.Error())
+}
+
+func TestUnwrapping(t *testing.T) {
+	notFoundErr := errors.New("not found")
+	badRequestErr := errors.New("bad request")
+
+	ee := errs{}
+
+	ee.append(notFoundErr)
+
+	assert.True(t, errors.Is(ee.ToError(), notFoundErr))
+	assert.False(t, errors.Is(ee.ToError(), badRequestErr))
+
+	ee.append(badRequestErr)
+	assert.True(t, errors.Is(ee.ToError(), badRequestErr))
 }

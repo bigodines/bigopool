@@ -1,8 +1,9 @@
 package bigopool
 
 import (
-	"fmt"
 	"sync"
+
+	"go.uber.org/multierr"
 )
 
 type (
@@ -16,42 +17,41 @@ type (
 	// errs is a thread safe struct for appending a slice of errors.
 	errs struct {
 		mutex sync.Mutex
-		all   []error
+		errs  error
 	}
 )
 
 // All returns the underlyings slice of errors.
 func (ee *errs) All() []error {
-	return ee.all
+	return multierr.Errors(ee.errs)
 }
 
 // ToError returns all errors as a single error.
 func (ee *errs) ToError() error {
-	if ee.IsEmpty() {
+	if ee.errs == nil {
 		return nil
 	}
 
-	return ee
+	return ee.errs
 }
 
 // IsEmpty is true if there are no errors.
 func (ee *errs) IsEmpty() bool {
-	return len(ee.all) == 0
+	return len(ee.All()) == 0
 }
 
 // Error implements the error interface.
 func (ee *errs) Error() string {
-	errorStr := ""
-	for _, err := range ee.All() {
-		errorStr = fmt.Sprintf("%s\n%s", errorStr, err.Error())
+	if ee.errs == nil {
+		return ""
 	}
 
-	return errorStr
+	return ee.errs.Error()
 }
 
 // append safely appends to the error slice.
 func (ee *errs) append(err error) {
 	ee.mutex.Lock()
-	ee.all = append(ee.all, err)
+	ee.errs = multierr.Append(ee.errs, err)
 	ee.mutex.Unlock()
 }
