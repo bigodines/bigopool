@@ -2,6 +2,8 @@ package bigopool
 
 import (
 	"errors"
+	"fmt"
+	"runtime/debug"
 	"sync"
 )
 
@@ -95,6 +97,13 @@ func (d *Dispatcher) Run() {
 
 	// Listen for results or errors
 	go func() {
+		defer func() {
+			cause := recover()
+			if cause != nil {
+				fmt.Println("panic recovered", cause)
+				fmt.Println(string(debug.Stack()))
+			}
+		}()
 		for {
 			select {
 			case err := <-d.errorCh:
