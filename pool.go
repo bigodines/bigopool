@@ -24,6 +24,7 @@ type (
 		jobQueue   chan Job
 		MaxWorkers int
 		wg         *sync.WaitGroup
+		workerWg   *sync.WaitGroup
 		// A pool of workers channels that are registered with the dispatcher
 		workerPool chan chan Job
 		quitCh     chan bool
@@ -55,6 +56,7 @@ func NewDispatcher(maxWorkers int, queueSize int) (*Dispatcher, error) {
 		MaxWorkers: maxWorkers,
 		workerPool: pool,
 		wg:         &sync.WaitGroup{},
+		workerWg:   &sync.WaitGroup{},
 		errorCh:    errors,
 		resultCh:   done,
 		quitCh:     quit,
@@ -63,7 +65,6 @@ func NewDispatcher(maxWorkers int, queueSize int) (*Dispatcher, error) {
 
 // Enqueue one or many jobs to process
 func (d *Dispatcher) Enqueue(joblist ...Job) {
-	d.wg.Add(len(joblist))
 	for _, job := range joblist {
 		d.jobQueue <- job
 	}
@@ -73,13 +74,17 @@ func (d *Dispatcher) Enqueue(joblist ...Job) {
 // return the results and errors
 func (d *Dispatcher) Wait() ([]Result, Errors) {
 	defer d.cleanUp()
-	d.wg.Wait()
+	// no more work so close the channels to tell workers job is done.
+	close(d.jobQueue)
+	d.workerWg.Wait()
+	// workers have all finished close out dispatcher
 	d.quitCh <- true
+	// wait for all results to tally
+	d.wg.Wait()
 	return d.Results, &d.Errors
 }
 
 func (d *Dispatcher) cleanUp() {
-	close(d.jobQueue)
 	close(d.errorCh)
 	close(d.resultCh)
 	close(d.quitCh)
@@ -90,11 +95,13 @@ func (d *Dispatcher) Run() {
 	// Worker initialization
 	for i := 0; i < d.MaxWorkers; i++ {
 		worker := NewWorker(d.jobQueue, d.errorCh, d.resultCh)
-		worker.Start()
+		worker.Start(d.workerWg)
 	}
 
+	d.wg.Add(1)
 	// Listen for results or errors
 	go func() {
+		defer d.wg.Done()
 		for {
 			select {
 			case err := <-d.errorCh:
@@ -102,7 +109,6 @@ func (d *Dispatcher) Run() {
 			case res := <-d.resultCh:
 				// If you are changing this code, please note this is not a thread safe append()
 				d.Results = append(d.Results, res)
-				d.wg.Done()
 			case <-d.quitCh:
 				return
 			}

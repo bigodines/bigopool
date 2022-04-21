@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"runtime"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -69,10 +68,13 @@ func TestAppendResults(t *testing.T) {
 		t.Fail()
 	}
 	d.Run()
-	d.Enqueue(EchoJob{}, EchoJob{}, EchoJob{})
+	const numJobs = 1000
+	for i := 0; i < numJobs; i++ {
+		d.Enqueue(EchoJob{})
+	}
 
 	results, errors := d.Wait()
-	assert.Equal(t, 3, len(results))
+	assert.Equal(t, numJobs, len(results))
 	assert.Equal(t, 0, len(errors.All()))
 }
 
@@ -99,8 +101,6 @@ func TestDispatcherCleanup(t *testing.T) {
 	d.Enqueue(EchoJob{}, EchoJob{}, EchoJob{})
 	d.Wait()
 
-	// sleep so goroutines have time to exit
-	time.Sleep(1000 * time.Millisecond)
 	assert.Equal(t, ngr, runtime.NumGoroutine())
 }
 
