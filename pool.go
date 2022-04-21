@@ -2,8 +2,6 @@ package bigopool
 
 import (
 	"errors"
-	"fmt"
-	"runtime/debug"
 	"sync"
 )
 
@@ -91,23 +89,20 @@ func (d *Dispatcher) cleanUp() {
 func (d *Dispatcher) Run() {
 	// Worker initialization
 	for i := 0; i < d.MaxWorkers; i++ {
-		worker := NewWorker(d.jobQueue, d.errorCh, d.resultCh)
-		worker.Start()
+		d.startWorker()
 	}
 
 	// Listen for results or errors
 	go func() {
-		defer func() {
-			cause := recover()
-			if cause != nil {
-				fmt.Println("panic recovered", cause)
-				fmt.Println(string(debug.Stack()))
-			}
-		}()
 		for {
 			select {
 			case err := <-d.errorCh:
-				d.Errors.append(err)
+				if errors.Is(err, errWorkerPanic) {
+					// we lost a worker so restart one
+					d.startWorker()
+				} else {
+					d.Errors.append(err)
+				}
 			case res := <-d.resultCh:
 				// If you are changing this code, please note this is not a thread safe append()
 				d.Results = append(d.Results, res)
@@ -117,4 +112,9 @@ func (d *Dispatcher) Run() {
 			}
 		}
 	}()
+}
+
+func (d Dispatcher) startWorker() {
+	worker := NewWorker(d.jobQueue, d.errorCh, d.resultCh)
+	worker.Start()
 }
