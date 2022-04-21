@@ -1,10 +1,5 @@
 package bigopool
 
-import (
-	"errors"
-	"fmt"
-)
-
 type (
 	Worker struct {
 		// A channel for receiving a job that was dispatched
@@ -14,10 +9,6 @@ type (
 		errCh    chan error
 		resultCh chan Result
 	}
-)
-
-var (
-	errWorkerPanic = errors.New("worker panic")
 )
 
 // NewWorker creates a new worker that can be registered to a workerPool
@@ -34,14 +25,6 @@ func NewWorker(jobCh chan Job, errCh chan error, resultCh chan Result) Worker {
 // case we need to stop it
 func (w Worker) Start() {
 	go func() {
-		defer func() {
-			if cause := recover(); cause != nil {
-				w.errCh <- errors.New(fmt.Sprintf("%v", cause))
-				// send a panic error to notify we lost a worker
-				w.errCh <- errWorkerPanic
-				w.resultCh <- nil
-			}
-		}()
 		for {
 			select {
 			case job, more := <-w.jobCh:

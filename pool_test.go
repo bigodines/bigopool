@@ -104,27 +104,6 @@ func TestDispatcherCleanup(t *testing.T) {
 	assert.Equal(t, ngr, runtime.NumGoroutine())
 }
 
-type PanicJob struct{}
-
-func (e PanicJob) Execute() (Result, error) {
-	panic("wide spread panic test")
-	return nil, nil
-}
-
-func TestPanicJob(t *testing.T) {
-
-	d, e := NewDispatcher(1, 1)
-	if e != nil {
-		t.Fail()
-	}
-	d.Run()
-	d.Enqueue(PanicJob{}, PanicJob{}, PanicJob{})
-
-	results, errors := d.Wait()
-	assert.Equal(t, 3, len(results))
-	assert.Equal(t, 3, len(errors.All()))
-}
-
 // Benchmarks
 func benchmarkEchoJob(w, q int, b *testing.B) {
 	d, e := NewDispatcher(w, q)

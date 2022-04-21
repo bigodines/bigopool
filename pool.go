@@ -98,7 +98,8 @@ func (d *Dispatcher) cleanUp() {
 func (d *Dispatcher) Run() {
 	// Worker initialization
 	for i := 0; i < d.MaxWorkers; i++ {
-		d.startWorker()
+		worker := NewWorker(d.jobQueue, d.errorCh, d.resultCh)
+		worker.Start()
 	}
 
 	// Listen for results or errors
@@ -115,12 +116,7 @@ func (d *Dispatcher) Run() {
 		for {
 			select {
 			case err := <-d.errorCh:
-				if errors.Is(err, errWorkerPanic) {
-					// we lost a worker so restart one
-					d.startWorker()
-				} else {
-					d.Errors.append(err)
-				}
+				d.Errors.append(err)
 			case res := <-d.resultCh:
 				// If you are changing this code, please note this is not a thread safe append()
 				d.Results = append(d.Results, res)
@@ -130,9 +126,4 @@ func (d *Dispatcher) Run() {
 			}
 		}
 	}()
-}
-
-func (d Dispatcher) startWorker() {
-	worker := NewWorker(d.jobQueue, d.errorCh, d.resultCh)
-	worker.Start()
 }
