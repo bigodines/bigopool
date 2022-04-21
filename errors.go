@@ -11,6 +11,7 @@ type (
 		All() []error
 		ToError() error
 		IsEmpty() bool
+		append(err error)
 	}
 
 	// errs is a thread safe struct for appending a slice of errors.

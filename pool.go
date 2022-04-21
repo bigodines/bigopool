@@ -33,7 +33,7 @@ type (
 		errorCh  chan error
 		resultCh chan Result
 
-		Errors  errs
+		Errors  Errors
 		Results []Result
 	}
 )
@@ -60,6 +60,7 @@ func NewDispatcher(maxWorkers int, queueSize int) (*Dispatcher, error) {
 		errorCh:    errors,
 		resultCh:   done,
 		quitCh:     quit,
+		Errors:     &errs{},
 	}, nil
 }
 
@@ -81,14 +82,13 @@ func (d *Dispatcher) Wait() ([]Result, Errors) {
 			fmt.Println(string(debug.Stack()), cause)
 		}
 	}()
-	defer d.cleanUp()
+	//defer d.cleanUp()
 	d.wg.Wait()
 	d.quitCh <- true
-	return d.Results, &d.Errors
+	return d.Results, d.Errors
 }
 
 func (d *Dispatcher) cleanUp() {
-	close(d.jobQueue)
 	close(d.errorCh)
 	close(d.resultCh)
 	close(d.quitCh)
@@ -96,21 +96,26 @@ func (d *Dispatcher) cleanUp() {
 
 // Run gets the workers ready to work and listens to what they have to say at the end of their job
 func (d *Dispatcher) Run() {
+
+	var workerCleanupWG sync.WaitGroup
 	// Worker initialization
 	for i := 0; i < d.MaxWorkers; i++ {
 		worker := NewWorker(d.jobQueue, d.errorCh, d.resultCh)
-		worker.Start()
+		worker.Start(&workerCleanupWG)
 	}
 
 	// Listen for results or errors
 	go func() {
 		defer func() {
+			close(d.jobQueue)
+			workerCleanupWG.Wait()
+			d.cleanUp()
+		}()
+		defer func() {
 			// although it does not seem possible this is specifically for Dispatcher wg going negative
 			//  if root cause is found and rectified this can be removed.
 			if cause := recover(); cause != nil {
 				fmt.Println(string(debug.Stack()), cause)
-				// close things out.
-				d.cleanUp()
 			}
 		}()
 		for {

@@ -2,6 +2,7 @@ package bigopool
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/mock"
 	"runtime"
 	"testing"
 	"time"
@@ -102,6 +103,54 @@ func TestDispatcherCleanup(t *testing.T) {
 	// sleep so goroutines have time to exit
 	time.Sleep(1000 * time.Millisecond)
 	assert.Equal(t, ngr, runtime.NumGoroutine())
+}
+
+type mockErrors struct {
+	mock.Mock
+	d *Dispatcher
+}
+
+func (me *mockErrors) All() []error {
+	return nil
+}
+
+func (me *mockErrors) ToError() error {
+	return nil
+}
+
+func (me *mockErrors) IsEmpty() bool {
+	return true
+}
+
+func (me *mockErrors) append(err error) {
+	me.Called()
+}
+
+// this test case was introduced specifically for the recovery code to track down negative WaitGroup issue.
+func TestPanic(t *testing.T) {
+	defer func() {
+		if cause := recover(); cause != nil {
+			assert.Fail(t, "panic did occurred")
+		}
+	}()
+	d, e := NewDispatcher(10, 20)
+	if e != nil {
+		t.Fail()
+	}
+
+	// this is a hack to get the Displatcher to panic in the go routine.
+	errsMock := &mockErrors{d:d}
+	errsMock.On("append", mock.Anything).Panic("test panic")
+	d.Errors = errsMock
+
+	d.Run()
+	d.Enqueue(EchoJob{}, ErrorJob{}, EchoJob{})
+	// this is an additional hack since we're making it panic in the Errors.append so that
+	go func() {
+		time.Sleep(25*time.Millisecond)
+		d.wg.Done()
+	}()
+	d.Wait()
 }
 
 // Benchmarks
