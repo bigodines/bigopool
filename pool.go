@@ -2,6 +2,8 @@ package bigopool
 
 import (
 	"errors"
+	"fmt"
+	"runtime/debug"
 	"sync"
 )
 
@@ -72,6 +74,13 @@ func (d *Dispatcher) Enqueue(joblist ...Job) {
 // Wait blocks until workers are done with their magic
 // return the results and errors
 func (d *Dispatcher) Wait() ([]Result, Errors) {
+	defer func() {
+		// although it does not seem possible this is specifically for Dispatcher wg going negative
+		//  if root cause is found and rectified this can be removed.
+		if cause := recover(); cause != nil {
+			fmt.Println(string(debug.Stack()), cause)
+		}
+	}()
 	defer d.cleanUp()
 	d.wg.Wait()
 	d.quitCh <- true
@@ -94,6 +103,15 @@ func (d *Dispatcher) Run() {
 
 	// Listen for results or errors
 	go func() {
+		defer func() {
+			// although it does not seem possible this is specifically for Dispatcher wg going negative
+			//  if root cause is found and rectified this can be removed.
+			if cause := recover(); cause != nil {
+				fmt.Println(string(debug.Stack()), cause)
+				// close things out.
+				d.cleanUp()
+			}
+		}()
 		for {
 			select {
 			case err := <-d.errorCh:
