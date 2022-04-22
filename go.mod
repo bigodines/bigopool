@@ -1,4 +1,4 @@
-module github.com/bigodines/bigopool
+module github.com/bigodines/bigopool/v3
 
 go 1.15
 
