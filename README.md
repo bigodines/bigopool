@@ -16,7 +16,7 @@ Use this whenever the number of jobs you have is too large to run as goroutines 
 
 implement this simple interface:
 ```golang
-type TestJob {
+type TestJob struct {
     // your properties go here
 }
 func (j TestJob) Execute() (bigopool.Result, error) {
